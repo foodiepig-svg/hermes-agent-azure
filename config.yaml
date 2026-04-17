@@ -1,0 +1,23 @@
+model:
+  default: MiniMax-M2.7
+  provider: minimax
+  base_url: https://api.minimax.io/anthropic/v1
+  api_key: ${MINIMAX_API_KEY}
+  context_length: 100000
+
+agent:
+  max_turns: 90
+
+terminal:
+  backend: local
+  timeout: 180
+
+gateway:
+  platforms:
+    - telegram
+  telegram:
+    enabled: true
+    bot_token: ${TELEGRAM_BOT_TOKEN}
+  health:
+    port: 8000
+    endpoint: /health

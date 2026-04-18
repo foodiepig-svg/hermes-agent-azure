@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  telegramToken    String
+  githubRepoUrl    String
+  azureRegion      String   @default("southeastasia")
+  containerAppFqdn String?
+  status           String   @default("provisioning")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

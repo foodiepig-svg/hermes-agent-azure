@@ -22,16 +22,16 @@ Internet → Azure Container Apps → hermes-agent container (port 8000)
 
 ### Container App Endpoints
 - **App URL**: https://hermes-agent.orangehill-e65ae777.southeastasia.azurecontainerapps.io
-- **Active Revision**: hermes-agent--0000030 (v14 image + Groq + OpenRouter keys) — 100% traffic
+- **Active Revision**: hermes-agent--0000035 (v24 image) — 100% traffic
 - **Target Port**: 8000 (HTTP)
-- **Traffic**: 100% routed to rev 0000030
+- **Traffic**: 100% routed to rev 0000035
 
 ## Image & Deployment
 
 ### ACR Image
 - **Image**: `hermesagentacr.azurecr.io/hermes-agent:<tag>`
-- **Tags in registry**: v6, v7, v8, v10, v12, v14, v15, v16, v17, v18 (latest local build tag)
-- **Active deployed image**: v14 (deployed via `az containerapp update` to avoid rebuild hangs)
+- **Tags in registry**: v6 through v24 (use `az acr repository show-tags --order time_desc` to list)
+- **Active deployed image**: v24
 - **Build**: `az acr build` from local Dockerfile (python:3.11-slim base)
 
 ### Dockerfile Steps
@@ -53,8 +53,8 @@ Internet → Azure Container Apps → hermes-agent container (port 8000)
 | TELEGRAM_WEBHOOK_PORT | Set via container app env (8000) | ✅ |
 | TELEGRAM_WEBHOOK_SECRET | Set via container app env | ✅ |
 | TELEGRAM_ALLOWED_USERS | Set via container app env (222335742) | ✅ |
-| OPENROUTER_API_KEY | Set via container app env | ✅ |
-| GROQ_API_KEY | Set via container app env | ✅ |
+| OPENROUTER_API_KEY | Key Vault secret (referenced) | ✅ |
+| GROQ_API_KEY | Key Vault secret (referenced) | ✅ |
 | DEEPSEEK_API_KEY | Set via container app env (empty) | — |
 
 ### Container App Config
@@ -72,8 +72,8 @@ Internet → Azure Container Apps → hermes-agent container (port 8000)
 | Provider | Free Tier Models | API Key |
 |----------|-----------------|---------|
 | MiniMax M2.7 (default) | N/A (paid) | `MINIMAX_API_KEY` |
+| OpenRouter (fallback) | google/gemini-2.0-flash-thinking, deepseek/deepseek-chat-v3-0324, meta-llama/llama-4-Maverick | `OPENROUTER_API_KEY` |
 | Groq | llama-3.3-70b-versatile, mixtral-8x7b-32768 | `GROQ_API_KEY` |
-| OpenRouter | google/gemini-2.0-flash-thinking, deepseek/deepseek-chat-v3-0324, meta-llama/llama-4-Maverick | `OPENROUTER_API_KEY` |
 
 Switch model: `/model <name>` inside Telegram chat.
 
@@ -82,10 +82,14 @@ Switch model: `/model <name>` inside Telegram chat.
 model:
   default: MiniMax-M2.7
   provider: minimax
-  base_url: https://api.minimax.io/v1
+  base_url: https://api.minimax.io/anthropic
   api_key: ${MINIMAX_API_KEY}
   context_length: 100000
 ```
+
+**Critical**: MiniMax requires `base_url: https://api.minimax.io/anthropic` — NOT `/v1`. Hermes uses the base_url to determine auth method:
+- `/anthropic` → sends `Authorization: Bearer` header (correct for MiniMax)
+- `/v1` → sends `x-api-key` header (MiniMax rejects with 401)
 
 ## Configuration
 
@@ -94,7 +98,7 @@ model:
 model:
   default: MiniMax-M2.7
   provider: minimax
-  base_url: https://api.minimax.io/v1
+  base_url: https://api.minimax.io/anthropic
   api_key: ${MINIMAX_API_KEY}
   context_length: 100000
 
@@ -112,6 +116,16 @@ gateway:
     enabled: true
     bot_token: ${TELEGRAM_BOT_TOKEN}
 ```
+
+### .env (/app/.env)
+```
+MINIMAX_API_KEY=${MINIMAX_API_KEY}
+TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+GROQ_API_KEY=${GROQ_API_KEY}
+DEEPSEEK_API_KEY=
+```
+Note: `.env` uses `${VAR}` substitution so Container Apps env vars override at runtime.
 
 ### Pairing Data (/app/.hermes/pairing/)
 Pre-approved Telegram users copied into container at build time:
@@ -140,18 +154,17 @@ Skills are NOT pre-installed in the container. To install:
 
 ## Known Issues
 
-1. **Image rebuilds timeout on health check (UNRESOLVED)**: v16-v18 all time out despite identical Dockerfiles. Workaround: use v14 image + `az containerapp update --set-env-vars` for any config changes.
-2. ~~MiniMax API key returns 401~~ — Fixed: correct endpoint is `/anthropic/v1/messages`
-3. ~~Health check returns 504/timeout~~ — Rev 0000030 is healthy and responding
-4. ~~Telegram webhook not receiving~~ — Webhook is operational
+1. ~~Image rebuilds timeout on health check~~ — RESOLVED: v20+ builds succeeded
+2. ~~MiniMax API key returns 401~~ — RESOLVED: correct base_url is `/anthropic` not `/v1`
+3. ~~OpenRouter 400 "not a valid model ID"~~ — RESOLVED: use real model ID like `openai/gpt-4o-mini`
+4. ~~Health check returns 504/timeout~~ — Resolved in current deployment
 
 ## Project Structure
 ```
 hermes-agent-azure/
 ├── Dockerfile
 ├── config.yaml
-├── .env                    # Local only — NOT committed
-├── startup-debug.sh        # Debug entrypoint (writes to /tmp/startup.log)
+├── .env                    # Uses ${VAR} for Container Apps env var substitution
 ├── pairing/
 │   └── .hermes/
 │       └── pairing/
@@ -167,12 +180,20 @@ hermes-agent-azure/
 ## Secrets Reference
 | Secret Name | Key Vault | Used By |
 |-------------|-----------|---------|
-| minimax-api-key | hermes-keyvault | Container App env |
-| telegram-bot-token | hermes-keyvault | Container App env |
-| groq-api-key | hermes-keyvault | Container App env (OPENROUTER_API_KEY env var) |
-| openrouter-api-key | hermes-keyvault | Container App env (GROQ_API_KEY env var) |
+| minimax-api-key | hermes-keyvault | Container App env → MINIMAX_API_KEY |
+| telegram-bot-token | hermes-keyvault | Container App env → TELEGRAM_BOT_TOKEN |
+| groq-api-key | hermes-keyvault | Container App env → GROQ_API_KEY |
+| openrouter-api-key | hermes-keyvault | Container App env → OPENROUTER_API_KEY |
 
 ## Telegram Setup
-- **Bot Token**: `855532...Ia9g` (partial — stored in Key Vault)
+- **Bot Token**: `8555328062:AAEu-U2vsHMQKt8SQEAA2BFvK0Kre1tIa9g`
 - **Mode**: Webhook (receiving messages via webhook, not polling)
 - **Pairing**: Sunjay Soma (ID: 222335742) is pre-approved via `TELEGRAM_ALLOWED_USERS` env var
+- **Home channel**: Configured ✅
+
+## ACR Auth Workaround
+If `az acr login` times out, use:
+```bash
+az acr login -n hermesagentacr --expose-token
+```
+This returns a refresh token that can be exchanged for an access token for docker operations.

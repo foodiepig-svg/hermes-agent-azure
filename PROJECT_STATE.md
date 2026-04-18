@@ -36,13 +36,10 @@
 - Trade-off: bots can't learn from each other (acceptable for now)
 
 ### Profile Lifecycle Management (THE GOAL)
-- Template repo: `hermes-agent-project-template`
-  - Bicep templates for RG + Container App + Managed Identity + RBAC
-  - GitHub Actions workflow to deploy on push
-  - Dockerfile that clones project's profile repo at build time
-- New project = fork template + add project-specific config + push
-- All per-project credentials (managed identity, GitHub PAT) injected at deploy time
-- Self-service: no manual `az` commands needed per project
+- **Option B: Control plane web app** — a single management UI to create, manage, and monitor all Hermes projects/bots/profiles from one place
+- Shows all projects, their status, resource usage, bot health
+- "Create new project" → app calls Azure APIs + creates Telegram bot via BotFather + sets up repo
+- One app to rule them all — self-service project creation without manual CLI work
 
 ### Care Exchange Migration (first use case)
 - Profile on Mac → push to GitHub
@@ -50,10 +47,11 @@
 - Validates the template library works end-to-end
 
 ### Future Projects
-Each new project follows the same pattern:
-1. Fork `hermes-agent-project-template`
-2. Add profile repo URL + Telegram bot token to config
-3. Push to main → GitHub Action deploys to Azure automatically
+Each new project is created via the control plane web app:
+1. Open control plane → "Create new project"
+2. Enter project name, Telegram bot token (from BotFather), GitHub repo URL
+3. App creates RG, Container App, Managed Identity, sets up GitHub Actions
+4. Bot is live — no manual CLI work
 
 Planned:
 - care-exchange: profile on Mac ~/.hermes/profiles/care-exchange/ → needs push to GitHub

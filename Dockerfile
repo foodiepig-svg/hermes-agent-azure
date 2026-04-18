@@ -28,7 +28,7 @@ ENV TELEGRAM_ALLOWED_USERS="${TELEGRAM_ALLOWED_USERS:-222335742}"
 # Add hermes-agent to PYTHONPATH so 'python -m gateway.run' can find it
 ENV PYTHONPATH="/root/.hermes/hermes-agent:${PYTHONPATH}"
 
-# Copy config
+# Copy config — toolsets are enabled via config.yaml tools.enabled[]
 COPY config.yaml /app/config.yaml
 COPY .env /app/.env
 
@@ -40,6 +40,5 @@ COPY pairing/.hermes /root/.hermes
 
 EXPOSE 8000
 
-# Health check - disable Docker HEALTHCHECK, Azure handles liveness via probe
 # Run Hermes gateway
 CMD ["/root/.local/bin/hermes", "gateway", "run"]

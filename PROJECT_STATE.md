@@ -41,10 +41,9 @@
 - "Create new project" → app calls Azure APIs + creates Telegram bot via BotFather + sets up repo
 - One app to rule them all — self-service project creation without manual CLI work
 
-### Care Exchange Migration (first use case)
-- Profile on Mac → push to GitHub
-- Fork template → create care-exchange deployment
-- Validates the template library works end-to-end
+### Care Exchange Migration (deprioritized — revisit later)
+- On hold until control plane is built
+- Will be first use case once control plane exists
 
 ### Future Projects
 Each new project is created via the control plane web app:

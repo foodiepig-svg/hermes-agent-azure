@@ -26,7 +26,8 @@
 - Need to add GitHub PAT as secret so hermes-agent can push to GitHub
 - PAT should be scoped to hermes-agent-azure repo only
 
-## Strategic Goals (agreed 2026-04-19)
+## Ultimate Goal (2026-04-19)
+**Build a template + IaC system so that creating a new Hermes project/bot/profile on Azure is self-service: fork a template, push, and it's live — no manual Azure CLI work per project.**
 
 ### Core Architecture
 - Each project has one Hermes profile = one Telegram bot = one Container App
@@ -34,25 +35,25 @@
 - Isolation is the primary constraint — no cross-project contamination
 - Trade-off: bots can't learn from each other (acceptable for now)
 
-### Profile Lifecycle Management (NEW GOAL)
-- Problem: How to spin up new projects/bots/profiles without manual repetition
-- Current options considered: GitHub Actions template, control plane web app, Hermes native
-- **Decision deferred** — Option D (template repo + IaC) is practical starting point
-- Next step: Build template library (hermes-agent-project-template)
+### Profile Lifecycle Management (THE GOAL)
+- Template repo: `hermes-agent-project-template`
+  - Bicep templates for RG + Container App + Managed Identity + RBAC
+  - GitHub Actions workflow to deploy on push
+  - Dockerfile that clones project's profile repo at build time
+- New project = fork template + add project-specific config + push
+- All per-project credentials (managed identity, GitHub PAT) injected at deploy time
+- Self-service: no manual `az` commands needed per project
 
-### Immediate: Care Exchange Migration
-- Profile on Mac (~/.hermes/profiles/care-exchange/) → push to GitHub
-- Create care-exchange-rg, care-exchange-agent (Container App)
-- Managed identity scoped to care-exchange-rg only
-- GitHub PAT scoped to care-exchange repo only
+### Care Exchange Migration (first use case)
+- Profile on Mac → push to GitHub
+- Fork template → create care-exchange deployment
+- Validates the template library works end-to-end
 
-## Future Projects (per this architecture)
-Each project needs:
-1. Resource group: <project>-rg
-2. Container App: <project>-agent
-3. Managed identity (RBAC scoped to <project>-rg only)
-4. GitHub PAT (scoped to <project>-repo only)
-5. Profile repo on GitHub
+### Future Projects
+Each new project follows the same pattern:
+1. Fork `hermes-agent-project-template`
+2. Add profile repo URL + Telegram bot token to config
+3. Push to main → GitHub Action deploys to Azure automatically
 
 Planned:
 - care-exchange: profile on Mac ~/.hermes/profiles/care-exchange/ → needs push to GitHub

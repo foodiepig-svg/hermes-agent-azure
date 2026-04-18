@@ -26,6 +26,26 @@
 - Need to add GitHub PAT as secret so hermes-agent can push to GitHub
 - PAT should be scoped to hermes-agent-azure repo only
 
+## Strategic Goals (agreed 2026-04-19)
+
+### Core Architecture
+- Each project has one Hermes profile = one Telegram bot = one Container App
+- Each bot constrained to one RG (resource group) and one GitHub repo
+- Isolation is the primary constraint — no cross-project contamination
+- Trade-off: bots can't learn from each other (acceptable for now)
+
+### Profile Lifecycle Management (NEW GOAL)
+- Problem: How to spin up new projects/bots/profiles without manual repetition
+- Current options considered: GitHub Actions template, control plane web app, Hermes native
+- **Decision deferred** — Option D (template repo + IaC) is practical starting point
+- Next step: Build template library (hermes-agent-project-template)
+
+### Immediate: Care Exchange Migration
+- Profile on Mac (~/.hermes/profiles/care-exchange/) → push to GitHub
+- Create care-exchange-rg, care-exchange-agent (Container App)
+- Managed identity scoped to care-exchange-rg only
+- GitHub PAT scoped to care-exchange repo only
+
 ## Future Projects (per this architecture)
 Each project needs:
 1. Resource group: <project>-rg

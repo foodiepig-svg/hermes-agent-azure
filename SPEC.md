@@ -207,3 +207,28 @@ GITHUB_PAT=<personal access token with repo scope>
 - Profile content management (profile repo is managed separately)
 - Automated profile sync from GitHub to running bot (GitHub Actions handles this)
 - Multi-cloud support (Azure only)
+
+## 8. Development Status
+
+### Completed
+- [x] Project scaffold (Next.js 16 + Tailwind v4 + TypeScript)
+- [x] Database schema + Prisma 5 + SQLite
+- [x] AES-256-GCM encryption for telegram tokens
+- [x] API routes: `GET/POST /api/projects`, `GET/DELETE /api/projects/[name]`, `GET /api/projects/[name]/health`, `GET /api/health`
+- [x] UI components: StatusBadge, ProjectTable, CreateProjectModal, ConfirmDeleteModal
+- [x] shadcn/ui v5 (Base UI) — dark theme, dialog, table, badge, select, dropdown-menu, sonner
+- [x] Production build passes clean
+
+### In Progress
+- [ ] Azure provisioning in `POST /api/projects` (create RG, Container App, MI, RBAC via Azure SDK)
+- [ ] GitHub API calls in `POST /api/projects` (add secrets to repo)
+- [ ] Telegram Bot API in `POST /api/projects` (set webhook)
+
+### Pending
+- [ ] `DELETE /api/projects/[name]` — delete RG and all Azure resources
+- [ ] Deploy control-plane to Azure Container Apps
+- [ ] README with setup instructions
+
+### Known Issues
+- shadcn/ui v5 uses Base UI (not Radix) — `asChild` replaced with `render` prop, Select value is nullable
+- Control plane runs as single instance (SQLite file-based — not for production multi-user)

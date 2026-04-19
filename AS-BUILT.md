@@ -67,6 +67,7 @@ Switch model mid-conversation: `/model <model-name>`
 | Telegram bot token | `telegram-bot-token` |
 | Groq API key | `groq-api-key` |
 | OpenRouter API key | `openrouter-api-key` |
+| GitHub PAT | `github-pat` |
 
 ## Resolved Issues
 

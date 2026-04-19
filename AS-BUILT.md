@@ -1,7 +1,7 @@
 # Hermes Agent Azure — As Built
 
 ## Purpose
-Deploy NousResearch Hermes Agent on Azure Container Apps with Telegram integration for personal use.
+Deploy NousResearch Hermes Agent on Azure Container Apps with Telegram integration for personal use. One of potentially many isolated tenant deployments for the broader Care Exchange platform.
 
 ## Decisions & Rationale
 
@@ -16,6 +16,13 @@ New image builds (v16, v17, v18) consistently failed the health check with TCP t
 
 ### Hermes installed via official installer
 Used the official `curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup` instead of pip install. This installs Node.js, Playwright, and all TUI/browser dependencies.
+
+### Control Plane Abandoned
+The hermes-control-plane Next.js app was built as a self-service provisioning dashboard but was abandoned in favour of a skill-based approach. Provisioning a new tenant is now done by handing the `azure-tenant-project-provision` skill to any agent with `az` + `gh` CLI access — faster, simpler, and no API layer to maintain.
+
+Deleted Azure resources:
+- `control-plane` Container App
+- `control-plane-env` Container App Environment
 
 ## Deployment Log
 
@@ -85,39 +92,25 @@ Switch model mid-conversation: `/model <model-name>`
 
 4. **Image rebuild hangs**: Intermittent ACR infrastructure issue — v20+ builds succeeded consistently
 
-## hermes-control-plane Deployment (2026-04-19)
-| Image | Rev | Notes |
-|-------|-----|-------|
-| v6 | — | Initial deploy |
-| v13 | 0000011 | **Current** — Key Vault for ACR password, RBAC roles active (Contributor + UAA + Key Vault Secrets User) |
+## Provisioning New Tenants
 
-- **Repo**: github.com/foodiepig-svg/hermes-control-plane
-- **Image**: hermesagentacr.azurecr.io/control-plane:v13
-- **URL**: https://control-plane.thankfulhill-a8e49df7.southeastasia.azurecontainerapps.io
-- **Container App env**: control-plane-env
-- **Stack**: Next.js 16, Prisma 5, SQLite, shadcn/ui v5 (Base UI)
+New tenant/projects are provisioned using the `azure-tenant-project-provision` skill. This replaces the abandoned control-plane approach.
 
-### control-plane API Routes (as of v6)
-| Method | Endpoint | Status |
-|--------|----------|--------|
-| GET | /api/projects | ✅ Implemented |
-| POST | /api/projects | ⚠️ Skeleton only — Azure/GitHub/Telegram wiring pending |
-| GET | /api/projects/[name] | ✅ Implemented |
-| DELETE | /api/projects/[name] | ✅ Implemented (DELETE teardown Azure RG) |
-| GET | /api/projects/[name]/health | ✅ Implemented (polls FQDN, sets Telegram webhook) |
-| GET | /api/health | ✅ Implemented (clean, no errors) |
+### Skill-Based Provisioning
+Any agent with `az` + `gh` CLI access can be handed the skill with these inputs:
+- `PROJECT_NAME`: short identifier (e.g. `food-diary`, `care-exchange`)
+- `TELEGRAM_BOT_TOKEN`: Bot token from @BotFather
+- `MINIMAX_API_KEY`: API key for the LLM
+- `GITHUB_REPO`: Full repo slug
+- `AZURE_LOCATION`: Azure region (default: `southeastasia`)
 
-### control-plane Pending Wiring
-- [ ] POST /api/projects: Azure provisioning (create RG, Container App, MI, RBAC)
-- [ ] POST /api/projects: GitHub API calls (add secrets to repo)
-- [ ] POST /api/projects: Telegram Bot API (set webhook)
-- [ ] Auth: bcrypt password check, httpOnly session cookie, rate limiting
-- [ ] README with setup instructions
+The skill handles: create RG → create MI → assign RBAC → create Container App → set GitHub secrets → set Telegram webhook → deploy.
+
+See: `azure-tenant-project-provision` skill in Hermes skills directory.
 
 ## Pending Work
 1. **Toolsets**: Cannot pre-enable toolsets in Dockerfile (requires TTY). User must run `/tools` in Telegram chat after connecting.
 2. **Skills**: Cannot pre-install skills in Dockerfile (requires interactive TTY). User must run `/skills install <name>` in Telegram chat.
 3. **GitHub Actions CI/CD**: Not yet functional — needs service principal created via Azure Portal.
-4. **Multi-agent**: Additional Container Apps (one per business idea) not yet deployed.
-5. **Control plane wiring**: Azure provisioning, GitHub API, Telegram webhook all need implementing in POST /api/projects.
-6. **Control plane auth**: Login form exists but no password check is wired.
+4. **Care Exchange migration**: First real tenant (food diary bot) still needs to be fully migrated into the one-project-one-container architecture.
+5. **Template repo library**: Build `hermes-agent-project-template` as the starter template for future projects.

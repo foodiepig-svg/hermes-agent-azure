@@ -222,19 +222,21 @@ GITHUB_PAT=<personal access token with repo scope>
 - [x] Project scaffold (Next.js 16 + Tailwind v4 + TypeScript)
 - [x] Database schema + Prisma 5 + SQLite
 - [x] AES-256-GCM encryption for telegram tokens
-- [x] API routes: `GET/POST /api/projects`, `GET/DELETE /api/projects/[name]`, `GET /api/projects/[name]/health`, `GET /api/health`
+- [x] API routes: GET/POST /api/projects, GET/DELETE /api/projects/[name], GET /api/projects/[name]/health, GET /api/health
 - [x] UI components: StatusBadge, ProjectTable, CreateProjectModal, ConfirmDeleteModal
 - [x] shadcn/ui v5 (Base UI) — dark theme, dialog, table, badge, select, dropdown-menu, sonner
 - [x] Production build passes clean
 - [x] Deployed to Azure Container Apps (control-plane-env, image v6)
+- [x] DELETE /api/projects/[name] teardown wired (deletes RG and all Azure resources)
+- [x] Health endpoint polls for FQDN before checking, sets Telegram webhook
+- [x] GET /api/health returns clean response (no errors)
 
 ### In Progress
-- [ ] Azure provisioning in `POST /api/projects` (create RG, Container App, MI, RBAC via Azure SDK)
-- [ ] GitHub API calls in `POST /api/projects` (add secrets to repo)
-- [ ] Telegram Bot API in `POST /api/projects` (set webhook)
+- [ ] Wire up Azure provisioning in POST /api/projects (create RG, Container App, MI, RBAC via Azure SDK)
+- [ ] Wire up GitHub API calls in POST /api/projects (add secrets to repo)
+- [ ] Wire up Telegram Bot API in POST /api/projects (set webhook)
 
 ### Pending
-- [ ] `DELETE /api/projects/[name]` — delete RG and all Azure resources
 - [ ] Add secure login (bcrypt password check, httpOnly session cookie, rate limiting)
 - [ ] README with setup instructions
 

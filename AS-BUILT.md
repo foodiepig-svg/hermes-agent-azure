@@ -84,8 +84,38 @@ Switch model mid-conversation: `/model <model-name>`
 
 4. **Image rebuild hangs**: Intermittent ACR infrastructure issue — v20+ builds succeeded consistently
 
+## hermes-control-plane Deployment (2026-04-19)
+| Image | Rev | Notes |
+|-------|-----|-------|
+| v6 | — | **Current** — Next.js 16 + Prisma5/SQLite, health check polling fix |
+
+- **Repo**: github.com/foodiepig-svg/hermes-control-plane
+- **Image**: hermesagentacr.azurecr.io/control-plane:v6
+- **URL**: https://control-plane.thankfulhill-a8e49df7.southeastasia.azurecontainerapps.io
+- **Container App env**: control-plane-env
+- **Stack**: Next.js 16, Prisma 5, SQLite, shadcn/ui v5 (Base UI)
+
+### control-plane API Routes (as of v6)
+| Method | Endpoint | Status |
+|--------|----------|--------|
+| GET | /api/projects | ✅ Implemented |
+| POST | /api/projects | ⚠️ Skeleton only — Azure/GitHub/Telegram wiring pending |
+| GET | /api/projects/[name] | ✅ Implemented |
+| DELETE | /api/projects/[name] | ✅ Implemented (DELETE teardown Azure RG) |
+| GET | /api/projects/[name]/health | ✅ Implemented (polls FQDN, sets Telegram webhook) |
+| GET | /api/health | ✅ Implemented (clean, no errors) |
+
+### control-plane Pending Wiring
+- [ ] POST /api/projects: Azure provisioning (create RG, Container App, MI, RBAC)
+- [ ] POST /api/projects: GitHub API calls (add secrets to repo)
+- [ ] POST /api/projects: Telegram Bot API (set webhook)
+- [ ] Auth: bcrypt password check, httpOnly session cookie, rate limiting
+- [ ] README with setup instructions
+
 ## Pending Work
 1. **Toolsets**: Cannot pre-enable toolsets in Dockerfile (requires TTY). User must run `/tools` in Telegram chat after connecting.
 2. **Skills**: Cannot pre-install skills in Dockerfile (requires interactive TTY). User must run `/skills install <name>` in Telegram chat.
 3. **GitHub Actions CI/CD**: Not yet functional — needs service principal created via Azure Portal.
 4. **Multi-agent**: Additional Container Apps (one per business idea) not yet deployed.
+5. **Control plane wiring**: Azure provisioning, GitHub API, Telegram webhook all need implementing in POST /api/projects.
+6. **Control plane auth**: Login form exists but no password check is wired.

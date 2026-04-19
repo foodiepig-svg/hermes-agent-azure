@@ -19,6 +19,8 @@ Internet → Azure Container Apps → hermes-agent container (port 8000)
 | Container App | hermes-agent | Southeast Asia |
 | Container Registry | hermesagentacr | Southeast Asia |
 | Key Vault | hermes-keyvault | Southeast Asia |
+| Container Apps Environment | control-plane-env | Southeast Asia |
+| Container App | hermes-control-plane | Southeast Asia |
 
 ### Container App Endpoints
 - **App URL**: https://hermes-agent.orangehill-e65ae777.southeastasia.azurecontainerapps.io
@@ -190,6 +192,35 @@ hermes-agent-azure/
 - **Mode**: Webhook (receiving messages via webhook, not polling)
 - **Pairing**: Sunjay Soma (ID: 222335742) is pre-approved via `TELEGRAM_ALLOWED_USERS` env var
 - **Home channel**: Configured ✅
+
+## Hermes Control Plane
+
+Separate Next.js 16 app that provisions and manages all hermes-agent projects.
+
+### Overview
+- **URL**: https://control-plane.thankfulhill-a8e49df7.southeastasia.azurecontainerapps.io
+- **Repo**: github.com/foodiepig-svg/hermes-control-plane
+- **Stack**: Next.js 16 + Prisma 5 + SQLite, shadcn/ui v5 (Base UI)
+- **Container App env**: control-plane-env
+
+### Architecture
+- Single web dashboard for all projects
+- Self-service project creation (form → Azure provisioning → live bot)
+- Project list with health status indicators
+- Delete project with RG teardown
+
+### Provisioning Flow
+1. User fills form: project name, Telegram bot token, GitHub repo URL, Azure region
+2. Control plane creates: RG, Container App, Managed Identity, RBAC
+3. Control plane calls GitHub API: adds TELEGRAM_BOT_TOKEN + AZURE_CREDENTIALS secrets
+4. Control plane calls Telegram API: sets webhook URL
+5. Bot is live at `<fqdn>/telegram`
+
+### Pending Wiring (as of v6)
+- POST /api/projects: Azure Resource Manager calls (create RG, Container App, MI, RBAC)
+- POST /api/projects: GitHub API calls (add secrets to repo)
+- POST /api/projects: Telegram Bot API (set webhook)
+- Auth: bcrypt password check, httpOnly session cookie, rate limiting
 
 ## ACR Auth Workaround
 If `az acr login` times out, use:

@@ -16,6 +16,9 @@ RUN curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -
     && apt-get update && apt-get install -y azure-cli \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Azure CLI for identity-based auth
+RUN curl -sL https://aka.ms/InstallAzureCLILinux | bash
+
 # Install Hermes Agent (skip interactive setup wizard)
 RUN curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup
 

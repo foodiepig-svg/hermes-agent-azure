@@ -218,6 +218,7 @@ GITHUB_PAT=<personal access token with repo scope>
 - [x] UI components: StatusBadge, ProjectTable, CreateProjectModal, ConfirmDeleteModal
 - [x] shadcn/ui v5 (Base UI) — dark theme, dialog, table, badge, select, dropdown-menu, sonner
 - [x] Production build passes clean
+- [x] Deployed to Azure Container Apps (control-plane-env, image v6)
 
 ### In Progress
 - [ ] Azure provisioning in `POST /api/projects` (create RG, Container App, MI, RBAC via Azure SDK)
@@ -226,7 +227,6 @@ GITHUB_PAT=<personal access token with repo scope>
 
 ### Pending
 - [ ] `DELETE /api/projects/[name]` — delete RG and all Azure resources
-- [ ] Deploy control-plane to Azure Container Apps
 - [ ] README with setup instructions
 
 ### Known Issues

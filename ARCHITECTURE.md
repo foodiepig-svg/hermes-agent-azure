@@ -1,7 +1,7 @@
 # Hermes Agent Azure — Architecture
 
 ## Overview
-Self-hosted AI agent (NousResearch Hermes) deployed on Azure Container Apps, connected to Telegram. Supports multiple LLM providers (MiniMax, Groq, OpenRouter) with free tier models.
+Self-hosted AI agent (NousResearch Hermes) deployed on Azure Container Apps, connected to Telegram. Supports multiple LLM providers (MiniMax, Groq, OpenRouter) with free tier models. This is the first isolated tenant deployed under the Care Exchange multi-project architecture.
 
 ## Infrastructure
 
@@ -19,8 +19,6 @@ Internet → Azure Container Apps → hermes-agent container (port 8000)
 | Container App | hermes-agent | Southeast Asia |
 | Container Registry | hermesagentacr | Southeast Asia |
 | Key Vault | hermes-keyvault | Southeast Asia |
-| Container Apps Environment | control-plane-env | Southeast Asia |
-| Container App | hermes-control-plane | Southeast Asia |
 
 ### Container App Endpoints
 - **App URL**: https://hermes-agent.orangehill-e65ae777.southeastasia.azurecontainerapps.io
@@ -121,12 +119,11 @@ gateway:
 
 ### .env (/app/.env)
 ```
-MINIMAX_API_KEY=${MINIMAX_API_KEY}
-TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-GROQ_API_KEY=${GROQ_API_KEY}
-DEEPSEEK_API_KEY=
-```
+MINIMAX_API_KEY=${MINI...KEY}
+TELEGRAM_BOT_TOKEN=${TELE...KEN}
+OPENROUTER_API_KEY=${OPEN...KEY}
+GROQ_API_KEY=***
+DEEPSEEK_API_KEY=***
 Note: `.env` uses `${VAR}` substitution so Container Apps env vars override at runtime.
 
 ### Pairing Data (/app/.hermes/pairing/)
@@ -186,41 +183,19 @@ hermes-agent-azure/
 | telegram-bot-token | hermes-keyvault | Container App env → TELEGRAM_BOT_TOKEN |
 | groq-api-key | hermes-keyvault | Container App env → GROQ_API_KEY |
 | openrouter-api-key | hermes-keyvault | Container App env → OPENROUTER_API_KEY |
+| github-pat | hermes-keyvault | GitHub API access for provisioning |
 
 ## Telegram Setup
-- **Bot Token**: `8555328062:AAEu-U2vsHMQKt8SQEAA2BFvK0Kre1tIa9g`
+- **Bot Token**: `8555328062:***`
 - **Mode**: Webhook (receiving messages via webhook, not polling)
 - **Pairing**: Sunjay Soma (ID: 222335742) is pre-approved via `TELEGRAM_ALLOWED_USERS` env var
 - **Home channel**: Configured ✅
 
-## Hermes Control Plane
+## Provisioning New Projects
 
-Separate Next.js 16 app that provisions and manages all hermes-agent projects.
+New tenant projects are provisioned using the `azure-tenant-project-provision` skill, not via a control-plane API. This skill-based approach replaces the abandoned hermes-control-plane.
 
-### Overview
-- **URL**: https://control-plane.thankfulhill-a8e49df7.southeastasia.azurecontainerapps.io
-- **Repo**: github.com/foodiepig-svg/hermes-control-plane
-- **Stack**: Next.js 16 + Prisma 5 + SQLite, shadcn/ui v5 (Base UI)
-- **Container App env**: control-plane-env
-
-### Architecture
-- Single web dashboard for all projects
-- Self-service project creation (form → Azure provisioning → live bot)
-- Project list with health status indicators
-- Delete project with RG teardown
-
-### Provisioning Flow
-1. User fills form: project name, Telegram bot token, GitHub repo URL, Azure region
-2. Control plane creates: RG, Container App, Managed Identity, RBAC
-3. Control plane calls GitHub API: adds TELEGRAM_BOT_TOKEN + AZURE_CREDENTIALS secrets
-4. Control plane calls Telegram API: sets webhook URL
-5. Bot is live at `<fqdn>/telegram`
-
-### Pending Wiring (as of v6)
-- POST /api/projects: Azure Resource Manager calls (create RG, Container App, MI, RBAC)
-- POST /api/projects: GitHub API calls (add secrets to repo)
-- POST /api/projects: Telegram Bot API (set webhook)
-- Auth: bcrypt password check, httpOnly session cookie, rate limiting
+See: `azure-tenant-project-provision` skill for the full provisioning workflow.
 
 ## ACR Auth Workaround
 If `az acr login` times out, use:

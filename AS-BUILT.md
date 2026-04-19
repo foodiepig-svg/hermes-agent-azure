@@ -88,10 +88,11 @@ Switch model mid-conversation: `/model <model-name>`
 ## hermes-control-plane Deployment (2026-04-19)
 | Image | Rev | Notes |
 |-------|-----|-------|
-| v6 | — | **Current** — Next.js 16 + Prisma5/SQLite, health check polling fix |
+| v6 | — | Initial deploy |
+| v13 | 0000011 | **Current** — Key Vault for ACR password, RBAC roles active (Contributor + UAA + Key Vault Secrets User) |
 
 - **Repo**: github.com/foodiepig-svg/hermes-control-plane
-- **Image**: hermesagentacr.azurecr.io/control-plane:v6
+- **Image**: hermesagentacr.azurecr.io/control-plane:v13
 - **URL**: https://control-plane.thankfulhill-a8e49df7.southeastasia.azurecontainerapps.io
 - **Container App env**: control-plane-env
 - **Stack**: Next.js 16, Prisma 5, SQLite, shadcn/ui v5 (Base UI)

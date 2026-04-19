@@ -67,6 +67,14 @@ A single web dashboard that lets you create, manage, and monitor all Hermes proj
 - **Status badge:** green pulse if healthy, red if unreachable, yellow if degraded
 - **Quick actions per row:** View details, Copy bot URL, Delete
 - **Bulk actions:** None for now
+- **Auth gate:** Unauthenticated users see a login page; only authenticated users access the dashboard
+
+### Login Page
+- Single-field login: enter the control plane access token
+- Token stored in `CONTROL_PLANE_TOKEN` environment variable (hashed with bcrypt in DB or env comparison)
+- On success: session cookie set (httpOnly, secure, sameSite=lax)
+- Failed attempts: rate-limited (5 attempts per 15 min per IP)
+- No registration — token is pre-set via environment variable (single-user tool)
 
 ### Create New Project
 - **Form fields:** project name, Telegram token, GitHub repo URL, Azure region
@@ -199,9 +207,9 @@ AZURE_CLIENT_SECRET=<SP secret>
 GITHUB_PAT=<personal access token with repo scope>
 ```
 
-## 7. Out of Scope (for v1)
+## 7. Out of Scope (for v1) — NOW PLANNED
 
-- User authentication / teams (single-user owner for now)
+~~- User authentication / teams (single-user owner for now)~~ — **Now in scope: single-user password/token login**
 - Monitoring charts / graphs (just status indicators)
 - Project editing (only create + delete)
 - Profile content management (profile repo is managed separately)
@@ -227,8 +235,10 @@ GITHUB_PAT=<personal access token with repo scope>
 
 ### Pending
 - [ ] `DELETE /api/projects/[name]` — delete RG and all Azure resources
+- [ ] Add secure login (bcrypt password check, httpOnly session cookie, rate limiting)
 - [ ] README with setup instructions
 
 ### Known Issues
 - shadcn/ui v5 uses Base UI (not Radix) — `asChild` replaced with `render` prop, Select value is nullable
 - Control plane runs as single instance (SQLite file-based — not for production multi-user)
+- Docker daemon on Cloud Shell is unreliable — use `az acr build` for remote Docker builds

@@ -62,6 +62,7 @@ jobs:
               --min-replicas 1 \
               --max-replicas 1 \
               --image ludolabsregistry.azurecr.io/hermes-agent:latest \
+              --registry-server ludolabsregistry.azurecr.io \
               --registry-username ludolabsregistry \
               --registry-password "${{ secrets.ACR_PASSWORD }}" \
               --env-vars "$ENV_VARS"

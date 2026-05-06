@@ -10,19 +10,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Azure CLI
-RUN curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/repos/azure-cli $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/azure-cli.list \
-    && apt-get update && apt-get install -y azure-cli \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Azure CLI for identity-based auth
-RUN curl -sL https://aka.ms/InstallAzureCLILinux | bash
+# Azure CLI is NOT needed in the container — az containerapp commands run on the GH Actions runner, not inside the container
 
 # Install Hermes Agent (skip interactive setup wizard)
 RUN curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup
 
-# Install system-wide deps for gateway modules (hermes uses uv venv, but gateway imports these as system pkgs)
+# Install system-wide deps for gateway modules
 RUN pip install pyyaml python-dotenv --break-system-packages
 
 # Add hermes to PATH
@@ -32,7 +25,6 @@ ENV PATH="/root/.local/bin:/root/.hermes/node/bin:${PATH}"
 ENV HERMES_HOME="/app"
 
 # Allow pre-approved Telegram users by user ID (simpler than pairing files)
-# Override at container run time or set via Container App env var
 ENV TELEGRAM_ALLOWED_USERS="${TELEGRAM_ALLOWED_USERS:-222335742}"
 
 # Add hermes-agent to PYTHONPATH so 'python -m gateway.run' can find it
@@ -43,8 +35,6 @@ COPY config.yaml /app/config.yaml
 COPY .env /app/.env
 
 # Copy pre-approved pairing data so the bot owner doesn't need manual approval
-# Hermes binary runs as root and reads /root/.hermes/, not HERMES_HOME
-# So copy to BOTH locations
 COPY pairing/.hermes /app/.hermes
 COPY pairing/.hermes /root/.hermes
 

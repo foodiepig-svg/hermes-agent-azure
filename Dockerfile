@@ -41,4 +41,4 @@ COPY pairing/.hermes /root/.hermes
 EXPOSE 8000
 
 # Run Hermes gateway
-CMD ["/root/.local/bin/hermes", "gateway", "run"]
+CMD ["/usr/local/bin/hermes", "gateway", "run"]

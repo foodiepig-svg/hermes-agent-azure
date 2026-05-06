@@ -35,7 +35,19 @@ jobs:
 
       - name: Deploy to Container Apps
         run: |
-          APP_EXISTS=$(az containerapp show --name hermes-agent --resource-group hermes-rg --query 'name' -o tsv 2>/dev/null || echo "NOT_FOUND")
+          set -e
+          
+          APP_EXISTS=$(az containerapp show \
+            --name hermes-agent \
+            --resource-group hermes-rg \
+            --query 'name' \
+            -o tsv 2>/dev/null || echo "NOT_FOUND")
+          
+          ENV_VARS="MINIMAX_API_KEY=${{ secrets.MINIMAX_API_KEY }}"
+          ENV_VARS="$ENV_VARS TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}"
+          ENV_VARS="$ENV_VARS AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }}"
+          ENV_VARS="$ENV_VARS AZURE_OPENAI_DEPLOYMENT=${{ secrets.AZURE_OPENAI_DEPLOYMENT }}"
+          ENV_VARS="$ENV_VARS AZURE_LUDOLABS_KEY=${{ secrets.AZURE_LUDOLABS_KEY }}"
           
           if [ "$APP_EXISTS" = "NOT_FOUND" ]; then
             echo "Creating hermes-agent Container App..."
@@ -52,22 +64,12 @@ jobs:
               --image ludolabsregistry.azurecr.io/hermes-agent:latest \
               --registry-username ludolabsregistry \
               --registry-password "${{ secrets.ACR_PASSWORD }}" \
-              --set-env-vars \
-                MINIMAX_API_KEY="${{ secrets.MINIMAX_API_KEY }}" \
-                TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
-                AZURE_OPENAI_ENDPOINT="${{ secrets.AZURE_OPENAI_ENDPOINT }}" \
-                AZURE_OPENAI_DEPLOYMENT="${{ secrets.AZURE_OPENAI_DEPLOYMENT }}" \
-                AZURE_LUDOLABS_KEY="${{ secrets.AZURE_LUDOLABS_KEY }}"
+              --env-vars "$ENV_VARS"
           else
             echo "Updating existing hermes-agent Container App..."
             az containerapp update \
               --name hermes-agent \
               --resource-group hermes-rg \
               --image ludolabsregistry.azurecr.io/hermes-agent:latest \
-              --set-env-vars \
-                MINIMAX_API_KEY="${{ secrets.MINIMAX_API_KEY }}" \
-                TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
-                AZURE_OPENAI_ENDPOINT="${{ secrets.AZURE_OPENAI_ENDPOINT }}" \
-                AZURE_OPENAI_DEPLOYMENT="${{ secrets.AZURE_OPENAI_DEPLOYMENT }}" \
-                AZURE_LUDOLABS_KEY="${{ secrets.AZURE_LUDOLABS_KEY }}"
+              --env-vars "$ENV_VARS"
           fi

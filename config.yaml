@@ -5,12 +5,40 @@ model:
   api_key: ${MINIMAX_API_KEY}
   context_length: 100000
 
+# Smart routing: auto-fallback to free Groq model when primary hits rate limits
+smart_model_routing:
+  enabled: true
+  cheap_model: groq/llama-3.3-70b-versatile
+
 agent:
   max_turns: 90
 
 terminal:
   backend: local
   timeout: 180
+
+# Toolsets — enabled at startup
+# Use /tools in Telegram to manage, or set below
+tools:
+  enabled:
+    - web
+    - browser
+    - terminal
+    - file
+    - code_execution
+    - vision
+    - image_gen
+    - tts
+    - skills
+    - memory
+    - session_search
+    - delegation
+    - cronjob
+    - clarify
+    - messaging
+    - search
+    - todo
+    - homeassistant
 
 gateway:
   platforms:
